@@ -39,39 +39,39 @@ class SMTPServer:
             print("Could not shutdown server, error : ", e)
 
     def match_helo(self, string):
-
+        print(string)
         string = bytes.decode(string)
-        if re.search('/HELO \w+/', string):
+        if re.search('HELO \w+', string):
             return True
         return False
 
     def match_mail_from(self,string):
         string = bytes.decode(string)
-        if re.search('/(MAIL FROM: <)\w+(@)\w+(.)\w+(>)/',string):
+        if re.search('(MAIL FROM: <)\w+(@)\w+(.)\w+(>)',string):
             return True
         return False
 
     def match_rcpt(self, string):
         string = bytes.decode(string)
-        if re.search('/(RCPT TO: <)\w+(@)\w+(.)\w+(>)/', string):
+        if re.search('(RCPT TO: <)\w+(@)\w+(.)\w+(>)', string):
             return True
         return False
 
     def match_subject(self, string):
         string = bytes.decode(string)
-        if re.search('/Subject: \w*/', string):
+        if re.search('Subject: \w*', string):
             return True
         return False
 
     def match_from(self, string):
         string = bytes.decode(string)
-        if re.search('/From: \w+@\w+.\w+/', string):
+        if re.search('From: \w+@\w+.\w+', string):
             return True
         return False
 
     def match_to(self, string):
         string = bytes.decode(string)
-        if re.search('/To: \w+@\w+.\w+/', string):
+        if re.search('To: \w+@\w+.\w+', string):
             return True
         return False
 
@@ -83,10 +83,12 @@ class SMTPServer:
 
     def catch_msg(self, string, client_socket):
         string = bytes.decode(string)
-        while string != ".":
-            msg = "{}{}".format(msg, string)
+        while string != ".\n":
+
+            #msg = "{}{}".format(msg, string)
             string = client_socket.recv(1024)
             string = bytes.decode(string)
+            print(string)
         return
 
     def client_func(self, client_socket, client_address):
@@ -94,83 +96,54 @@ class SMTPServer:
         print("Client ", client_address, " connected")
 
         #220 Servidor FreddieSMTP
-        client_socket.send("220 Servidor FreddieSMTP".encode())
+        client_socket.send("220 Servidor FreddieSMTP\n".encode())
         client_response = client_socket.recv(1024)
         hello = self.match_helo(client_response)
         # HELO something
         while not hello:
-            client_socket.send("502 Unrecognized command".encode())
+            client_socket.send("502 Unrecognized command\n".encode())
             client_response = client_socket.recv(1024)
             hello = self.match_helo(client_response)
         #250 Yo! pleased to meet ya
-        client_socket.send("250 Yo! pleased to meet ya".encode())
+        client_socket.send("250 Yo! pleased to meet ya\n".encode())
 
         client_response = client_socket.recv(1024)
         mail_from = self.match_mail_from(client_response)
         #MAIL FROM: <SOMETHING@SOMETHING.SOMETHING>
         while not mail_from:
-            client_socket.send("502 Unrecognized command".encode())
+            client_socket.send("502 Unrecognized command\n".encode())
             client_response = client_socket.recv(1024)
             mail_from = self.match_mail_from(client_response)
         #250 OK
-        client_socket.send("250 OK".encode())
+        client_socket.send("250 OK\n".encode())
         client_response = client_socket.recv(1024)
         recpt_to = self.match_rcpt(client_response)
         #RECPT TO: <SOMETHING@SOMETHING.SOMETHING>
         while not recpt_to:
-            client_socket.send("502 Unrecognized command".encode())
+            client_socket.send("502 Unrecognized command\n".encode())
             client_response = client_socket.recv(1024)
             recpt_to = self.match_rcpt(client_response)
         #250 OK
-        client_socket.send("250 OK".encode())
+        client_socket.send("250 OK\n".encode())
         client_response = bytes.decode(client_socket.recv(1024))
         #DATA
-        while client_response != "DATA":
-            client_socket.send("502 Unrecognized command".encode())
+        print(client_response)
+        while client_response != 'DATA\n':
+            client_socket.send("502 Unrecognized command\n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
 
-        client_socket.send("354 End data with <CR><LF>.<CR><LF>".encode())
-        client_response = client_socket.recv(1024)
-        mail_subject = self.match_subject(client_response)
-
-        while not mail_subject:
-            client_socket.send("502 Unrecognized command".encode())
-            client_response = client_socket.recv(1024)
-            mail_subject = self.match_subject(client_response)
-
-        client_response = client_socket.recv(1024)
-        mail_from = self.match_from(client_response)
-
-        while not mail_from:
-            client_socket.send("502 Unrecognized command".encode())
-            client_response = client_socket.recv(1024)
-            mail_from = self.match_from(client_response)
-
-        client_response = client_socket.recv(1024)
-        mail_to = self.match_to(client_response)
-
-        while not mail_to:
-            client_socket.send("502 Unrecognized command".encode())
-            client_response = client_socket.recv(1024)
-            mail_to = self.match_to(client_response)
+        client_socket.send("354 End data with <CR><LF>.<CR><LF>\n".encode())
+        
 
         #if ( != ):
         # has to validate the to twice
 
-        client_response = client_socket.recv(1024)
-        empty = self.match_empty(client_response)
-
-        while not empty:
-            client_socket.send("502 Unrecognized command".encode())
-            client_response = client_socket.recv(1024)
-            empty = self.match_empty(client_response)
-
-        client_response = client_socket.recv(1024)
+        client_response = client_socket.recv(1024)  
         self.catch_msg(client_response, client_socket)
 
-        client_socket.send("250 Ok".encode())
+        client_socket.send("250 Ok\n".encode())
         client_response = client_socket.recv(1024)
-        client_socket.send("221 Bye".encode())
+        client_socket.send("221 Bye\n".encode())
 
         print("Closing connection with client: ", client_address)
         client_socket.close()
