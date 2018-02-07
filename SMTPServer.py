@@ -39,7 +39,6 @@ class SMTPServer:
             print("Could not shutdown server, error : ", e)
 
     def match_helo(self, string):
-        print(string)
         string = bytes.decode(string)
         if re.search('HELO \w+', string):
             return True
@@ -118,7 +117,7 @@ class SMTPServer:
         client_socket.send("250 OK\n".encode())
         client_response = client_socket.recv(1024)
         recpt_to = self.match_rcpt(client_response)
-        #RECPT TO: <SOMETHING@SOMETHING.SOMETHING>
+        #RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
         while not recpt_to:
             client_socket.send("502 Unrecognized command\n".encode())
             client_response = client_socket.recv(1024)
@@ -127,7 +126,6 @@ class SMTPServer:
         client_socket.send("250 OK\n".encode())
         client_response = bytes.decode(client_socket.recv(1024))
         #DATA
-        print(client_response)
         while client_response != 'DATA\n':
             client_socket.send("502 Unrecognized command\n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
