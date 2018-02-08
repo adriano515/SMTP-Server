@@ -176,7 +176,7 @@
             // emailErrorLabel
             // 
             this.emailErrorLabel.AutoSize = true;
-            this.emailErrorLabel.Location = new System.Drawing.Point(86, 230);
+            this.emailErrorLabel.Location = new System.Drawing.Point(67, 230);
             this.emailErrorLabel.Name = "emailErrorLabel";
             this.emailErrorLabel.Size = new System.Drawing.Size(0, 13);
             this.emailErrorLabel.TabIndex = 14;
@@ -207,6 +207,7 @@
             this.Controls.Add(this.label1);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

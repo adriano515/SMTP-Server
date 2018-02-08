@@ -41,11 +41,18 @@ namespace smtpClient
             }
         }
 
-        public int Response(String Command) {
+        public int ResponseInt(String Command) {
             byte[] data = new byte[1024];
             ns.Write(Encoding.ASCII.GetBytes(Command), 0, Command.Length);
             int recv = ns.Read(data, 0, data.Length);
             return Int32.Parse(Encoding.ASCII.GetString(data, 0, recv).Split(' ')[0]);
+        }
+        public DateTime ResponseDate(String Command)
+        {
+            byte[] data = new byte[1024];
+            ns.Write(Encoding.ASCII.GetBytes(Command), 0, Command.Length);
+            int recv = ns.Read(data, 0, data.Length);
+            return DateTime.Parse(Encoding.ASCII.GetString(data, 0, recv));
         }
         public void Write(String Command) {
             ns.Write(Encoding.ASCII.GetBytes(Command), 0, Command.Length);
@@ -53,16 +60,18 @@ namespace smtpClient
         private void button1_Click(object sender, EventArgs e)
         {
             String[] emails = toEmail.Text.Split(',');
+            //var rcptemails = Array.TrueForAll((from email in Enumerable.Range(0, emails.Length) select ResponseInt(emails[email])),250);
             String[] message = dataTextbox.Text.Split('\n');
             if (emails.All(a=>Validate(a))) {
-                if (Response("HELO relay.example.com") == 250 && Response("MAIL FROM: <bob@example.com>") == 250 && Response("RCPT TO: <alice@example.com>") == 250 && Response("DATA\n") == 354)
+                if (ResponseInt("HELO relay.example.com") == 250 && ResponseInt("MAIL FROM: <bob@example.com>") == 250 && ResponseInt("RCPT TO: <alice@example.com>") == 250 && ResponseInt("DATA\n") == 354)
                 {
                     Write("From: " + "bat14074gar14189" + " <bat14074gar14189@example.com>");
-                    Write("To: Alice Example <"+ String.Join(",", (from email in Enumerable.Range(0, emails.Length) select "<" + emails[email] + ">")).ToString() + ">");
+                    Write("To: Alice Example "+ String.Join(",", (from email in Enumerable.Range(0, emails.Length) select "<" + emails[email] + ">")).ToString() + "");
+                    Write("Date: " + ResponseDate("time").ToString() + "");
                     Write("Subject: "+ subjectText.Text +"");
                     Write("\n");
                     Array.ForEach(message, element => Write(element));
-                    if (Response(".") == 250 && Response("QUIT") == 221) {
+                    if (ResponseInt(".\n") == 250 && ResponseInt("QUIT") == 221) {
                         emailErrorLabel.Text = "Email Sent";
                         ns.Close();
                         server.Close();
@@ -107,6 +116,11 @@ namespace smtpClient
             openFileDialog1.DefaultExt = "txt";
             openFileDialog1.ShowDialog();
             emailErrorLabel.Text = openFileDialog1.FileName;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

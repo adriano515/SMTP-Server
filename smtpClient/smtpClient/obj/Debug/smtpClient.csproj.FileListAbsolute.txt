@@ -8,3 +8,13 @@ C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpClient\smtpClient\smtp
 C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpClient\smtpClient\smtpClient\obj\Debug\smtpClient.csproj.CoreCompileInputs.cache
 C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpClient\smtpClient\smtpClient\obj\Debug\smtpClient.exe
 C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpClient\smtpClient\smtpClient\obj\Debug\smtpClient.pdb
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\bin\Debug\smtpClient.exe.config
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\bin\Debug\smtpClient.exe
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\bin\Debug\smtpClient.pdb
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.csprojResolveAssemblyReference.cache
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.Form1.resources
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.Properties.Resources.resources
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.csproj.GenerateResource.Cache
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.csproj.CoreCompileInputs.cache
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.exe
+C:\Users\JuanLuis\Documents\UVG NOVENO SEMESTRE\REDES\smtpserver\SMTP-Server\smtpClient\smtpClient\obj\Debug\smtpClient.pdb

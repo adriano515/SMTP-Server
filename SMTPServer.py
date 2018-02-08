@@ -136,7 +136,10 @@ class SMTPServer:
         #if ( != ):
         # has to validate the to twice
 
-        client_response = client_socket.recv(1024)  
+        client_response = client_socket.recv(1024) 
+        print("WICHO")
+        print(client_response)
+        print(client_socket)
         self.catch_msg(client_response, client_socket)
 
         client_socket.send("250 Ok\n".encode())
