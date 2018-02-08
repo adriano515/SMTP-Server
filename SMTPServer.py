@@ -84,13 +84,60 @@ class SMTPServer:
         string = bytes.decode(string)
         while string != ".\n":
 
-            #msg = "{}{}".format(msg, string)
+            msg = "{}{}{}".format(msg, string, "\n")
             string = client_socket.recv(1024)
             string = bytes.decode(string)
             print(string)
-        return
+        return msg
+
+    def send_mail(self, domain, mail_from, rcpt_to, msg):
+        dns = socket.gethostbyname(domain)
+
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect(dns, 2407)
+
+        response = server_socket.recv(1024)
+        if("220" not in bytes.decode(response)):
+            print ("Server with domain " + domain + "responded with error")
+            return
+        server_socket.send("HELO uvg.domain.com")
+        response = server_socket.recv(1024)
+        if ("250" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
+            return
+        server_socket.send("MAIL FROM: <" + mail_from + ">")
+        response = server_socket.recv(1024)
+        if ("250" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
+            return
+        server_socket.send("RCPT TO: <" + rcpt_to + ">")
+        response = server_socket.recv(1024)
+        if ("250" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
+            return
+        server_socket.send("DATA")
+        response = server_socket.recv(1024)
+        if ("250" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
+            return
+
+        msgArray = msg.split("\n")
+        for i in msgArray:
+            server_socket.send(msgArray[i])
+        server_socket.send(".\n")
+        response = server_socket.recv(1024)
+        if ("250" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
+            return
+        server_socket.send("quit")
+        response = server_socket.recv(1024)
+        server_socket.close()
+
+
 
     def client_func(self, client_socket, client_address):
+
+        to_list = []
 
         print("Client ", client_address, " connected")
 
@@ -117,6 +164,7 @@ class SMTPServer:
         client_socket.send("250 OK\n".encode())
         client_response = client_socket.recv(1024)
         recpt_to = self.match_rcpt(client_response)
+        to_list.append(recpt_to)
         #RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
         while not recpt_to:
             client_socket.send("502 Unrecognized command\n".encode())
@@ -126,6 +174,12 @@ class SMTPServer:
         client_socket.send("250 OK\n".encode())
         client_response = bytes.decode(client_socket.recv(1024))
         #DATA
+        while recpt_to:
+            client_socket.send("250 OK\n".encode())
+            client_response = client_socket.recv(1024)
+            recpt_to = self.match_rcpt(client_response)
+            to_list.append(recpt_to)
+
         while client_response != 'DATA\n':
             client_socket.send("502 Unrecognized command\n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
@@ -136,11 +190,16 @@ class SMTPServer:
         #if ( != ):
         # has to validate the to twice
 
+<<<<<<< HEAD
         client_response = client_socket.recv(1024) 
         print("WICHO")
         print(client_response)
         print(client_socket)
         self.catch_msg(client_response, client_socket)
+=======
+        client_response = client_socket.recv(1024)  
+        msg = self.catch_msg(client_response, client_socket)
+>>>>>>> 1ff4000b2a86d78c1757c5894dd5e8079e372a3a
 
         client_socket.send("250 Ok\n".encode())
         client_response = client_socket.recv(1024)
@@ -148,6 +207,11 @@ class SMTPServer:
 
         print("Closing connection with client: ", client_address)
         client_socket.close()
+
+        for x in to_list:
+            domain = to_list[x].split('@')[1]
+
+            self.send_mail(domain,mail_from,to_list[x], msg)
 
 
     def _wait_for_connections(self):
