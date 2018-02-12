@@ -2,18 +2,59 @@ from multiprocessing import pool
 
 import socket
 import sys
-import time
-import os
-import threading
 import re
-import sqlite3
+import pymongo
+from queue import Queue
+from threading import Thread
 
+
+class Worker(Thread):
+    """ Thread executing tasks from a given tasks queue """
+    def __init__(self, tasks):
+        Thread.__init__(self)
+        self.tasks = tasks
+        self.daemon = True
+        self.start()
+
+    def run(self):
+        while True:
+            func, args, kargs = self.tasks.get()
+            try:
+                func(*args, **kargs)
+            except Exception as e:
+                # An exception happened in this thread
+                print(e)
+            finally:
+                # Mark this task as done, whether an exception happened or not
+                self.tasks.task_done()
+
+
+class ThreadPool:
+    """ Pool of threads consuming tasks from a queue """
+    def __init__(self, num_threads):
+        self.tasks = Queue(num_threads)
+        for _ in range(num_threads):
+            Worker(self.tasks)
+
+    def add_task(self, func, *args, **kargs):
+        """ Add a task to the queue """
+        self.tasks.put((func, args, kargs))
+
+    def map(self, func, args_list):
+        """ Add a list of tasks to the queue """
+        for args in args_list:
+            self.add_task(func, args)
+
+    def wait_completion(self):
+        """ Wait for completion of all the tasks in the queue """
+        self.tasks.join()
 
 class SMTPServer:
     ok = "250 Ok".encode()
     local_domain = "grupo2.com"
+    pool = ThreadPool(5)
 
-    def __init__(self, port=2407):
+    def __init__(self, port=2407, ):
         self.host = (socket.gethostbyname(socket.gethostname()))
         self.port = port
 
@@ -237,21 +278,18 @@ class SMTPServer:
             if(domain != self.local_domain):
                 self.send_mail(domain, mail_from, to_list[i], msg)
             #else:
-               
+
 
     def _wait_for_connections(self):
-
-        # needs thread pool
 
         while 1:
 
             print("Waiting for clients")
-            self.socket.listen(5)
+            self.socket.listen()
             client_socket, client_address = self.socket.accept()
 
             try:
-                thread = threading.Thread(target=self.client_func, args=(client_socket, client_address))
-                thread.start()
+                pool.add_task(self.client_func, args=(client_socket, client_address))
             except Exception as e:
                 print("Unable to create new thread for client ", client_address)
 
