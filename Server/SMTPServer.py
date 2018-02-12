@@ -3,7 +3,7 @@ from multiprocessing import pool
 import socket
 import sys
 import re
-import pymongo
+from pymongo import MongoClient
 from queue import Queue
 from threading import Thread
 
@@ -50,9 +50,13 @@ class ThreadPool:
         self.tasks.join()
 
 class SMTPServer:
+
     ok = "250 Ok".encode()
     local_domain = "grupo2.com"
     pool = ThreadPool(5)
+    client = MongoClient()
+    server_db = client.domainEmails
+
 
     def __init__(self, port=2407, ):
         self.host = (socket.gethostbyname(socket.gethostname()))
@@ -277,8 +281,18 @@ class SMTPServer:
             print("domain is " + domain)
             if(domain != self.local_domain):
                 self.send_mail(domain, mail_from, to_list[i], msg)
-            #else:
+            else:
+                collection = self.server_db[domain]
 
+                post = dict(
+                        From = mail_from,
+                        To = to_list[i],
+                        Subject = "test",
+                        Date = "date",
+                        Data = msg,
+                )
+
+                post_id = collection.insert_one(post).inserted_id
 
     def _wait_for_connections(self):
 
