@@ -7,20 +7,20 @@ import os
 import threading
 import re
 
-class SMTPServer:
 
+class SMTPServer:
     ok = "250 Ok".encode()
     msg = ""
 
-    def __init__(self, port = 2407):
-        self.host = '0.0.0.0'
+    def __init__(self, port=2407):
+        self.host = (socket.gethostbyname(socket.gethostname()))
         self.port = port
 
     def activate_server(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print ("Launching SMTP server on ", self.host, ":", self.port)
-            self.socket.bind((self.host,self.port))
+            print("Launching SMTP server on ", self.host, ":", self.port)
+            self.socket.bind((self.host, self.port))
 
         except Exception as e:
             print("Error: Could not launch server")
@@ -44,9 +44,9 @@ class SMTPServer:
             return True
         return False
 
-    def match_mail_from(self,string):
+    def match_mail_from(self, string):
         string = bytes.decode(string)
-        if re.search('(MAIL FROM: <)\w+(@)\w+(.)\w+(>)',string):
+        if re.search('(MAIL FROM: <)\w+(@)\w+(.)\w+(>)', string):
             return True
         return False
 
@@ -82,8 +82,8 @@ class SMTPServer:
 
     def catch_msg(self, string, client_socket):
         string = bytes.decode(string)
-        while string != ".\n":
-
+        msg = ""
+        while not re.search('.', string):
             msg = "{}{}{}".format(msg, string, "\n")
             string = client_socket.recv(1024)
             string = bytes.decode(string)
@@ -97,26 +97,31 @@ class SMTPServer:
         server_socket.connect(dns, 2407)
 
         response = server_socket.recv(1024)
-        if("220" not in bytes.decode(response)):
-            print ("Server with domain " + domain + "responded with error")
+
+        if ("220" not in bytes.decode(response)):
+            print("Server with domain " + domain + "responded with error")
             return
         server_socket.send("HELO uvg.domain.com")
         response = server_socket.recv(1024)
+
         if ("250" not in bytes.decode(response)):
             print("Server with domain " + domain + "responded with error")
             return
         server_socket.send("MAIL FROM: <" + mail_from + ">")
         response = server_socket.recv(1024)
+
         if ("250" not in bytes.decode(response)):
             print("Server with domain " + domain + "responded with error")
             return
         server_socket.send("RCPT TO: <" + rcpt_to + ">")
         response = server_socket.recv(1024)
+
         if ("250" not in bytes.decode(response)):
             print("Server with domain " + domain + "responded with error")
             return
         server_socket.send("DATA")
         response = server_socket.recv(1024)
+
         if ("250" not in bytes.decode(response)):
             print("Server with domain " + domain + "responded with error")
             return
@@ -126,14 +131,14 @@ class SMTPServer:
             server_socket.send(msgArray[i])
         server_socket.send(".\n")
         response = server_socket.recv(1024)
+
         if ("250" not in bytes.decode(response)):
             print("Server with domain " + domain + "responded with error")
             return
         server_socket.send("quit")
         response = server_socket.recv(1024)
+
         server_socket.close()
-
-
 
     def client_func(self, client_socket, client_address):
 
@@ -141,82 +146,98 @@ class SMTPServer:
 
         print("Client ", client_address, " connected")
 
-        #220 Servidor FreddieSMTP
+        # 220 Servidor FreddieSMTP
         client_socket.send("220 Servidor FreddieSMTP\n".encode())
+        print("Sent 220")
         client_response = client_socket.recv(1024)
+
+        print(client_response)
         hello = self.match_helo(client_response)
         # HELO something
         while not hello:
             client_socket.send("502 Unrecognized command\n".encode())
+            print("Sent 502 on HELO")
             client_response = client_socket.recv(1024)
+            print(client_response)
             hello = self.match_helo(client_response)
-        #250 Yo! pleased to meet ya
+        # 250 Yo! pleased to meet ya
         client_socket.send("250 Yo! pleased to meet ya\n".encode())
-
+        print("Sent 250 on meeting")
         client_response = client_socket.recv(1024)
+
         mail_from = self.match_mail_from(client_response)
-        #MAIL FROM: <SOMETHING@SOMETHING.SOMETHING>
+
+        # MAIL FROM: <SOMETHING@SOMETHING.SOMETHING>
         while not mail_from:
             client_socket.send("502 Unrecognized command\n".encode())
+            print("Sent 502 on MAIL")
             client_response = client_socket.recv(1024)
+            print(client_response)
             mail_from = self.match_mail_from(client_response)
-        #250 OK
+        # 250 OK
+        print(client_response)
         client_socket.send("250 OK\n".encode())
+        print("Sent 250 after mail")
         client_response = client_socket.recv(1024)
+        print(client_response)
         recpt_to = self.match_rcpt(client_response)
-        to_list.append(recpt_to)
-        #RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
+
+        # RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
         while not recpt_to:
             client_socket.send("502 Unrecognized command\n".encode())
+            print("Sent 502 on RCPT")
             client_response = client_socket.recv(1024)
+            print(client_response)
             recpt_to = self.match_rcpt(client_response)
-        #250 OK
+        # 250 OK
+        to_list.append(bytes.decode(client_response))
         client_socket.send("250 OK\n".encode())
+        print("Sent 250 after rcpt")
         client_response = bytes.decode(client_socket.recv(1024))
-        #DATA
-        while recpt_to:
-            client_socket.send("250 OK\n".encode())
-            client_response = client_socket.recv(1024)
-            recpt_to = self.match_rcpt(client_response)
-            to_list.append(recpt_to)
+        print(client_response)
 
-        while client_response != 'DATA\n':
+        while self.match_rcpt(client_response.encode()):
+            client_socket.send("250 OK\n".encode())
+            print("Sent 250 on recpt data")
+            client_response = client_socket.recv(1024)
+            print(client_response)
+            recpt_to = self.match_rcpt(client_response)
+            to_list.append(bytes.decode(client_response))
+        # DATA
+        while client_response != "DATA":
+            print("Sent 502 on data")
             client_socket.send("502 Unrecognized command\n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
+            print(client_response)
 
         client_socket.send("354 End data with <CR><LF>.<CR><LF>\n".encode())
-        
+        print("Sent 354")
 
-        #if ( != ):
+        # if ( != ):
         # has to validate the to twice
 
-<<<<<<< HEAD
-        client_response = client_socket.recv(1024) 
-        print("WICHO")
+        client_response = client_socket.recv(1024)
         print(client_response)
-        print(client_socket)
-        self.catch_msg(client_response, client_socket)
-=======
-        client_response = client_socket.recv(1024)  
         msg = self.catch_msg(client_response, client_socket)
->>>>>>> 1ff4000b2a86d78c1757c5894dd5e8079e372a3a
-
+        print("Finished data")
         client_socket.send("250 Ok\n".encode())
         client_response = client_socket.recv(1024)
+        print(client_response)
         client_socket.send("221 Bye\n".encode())
 
         print("Closing connection with client: ", client_address)
         client_socket.close()
 
-        for x in to_list:
-            domain = to_list[x].split('@')[1]
+        for i in range(len(to_list)):
+            domain = to_list[i].split("@")[1]
+            domain = domain.replace(">", "")
+            print(domain)
 
-            self.send_mail(domain,mail_from,to_list[x], msg)
-
+            self.send_mail(domain, mail_from, to_list[i], msg)
 
     def _wait_for_connections(self):
 
-        #needs thread pool
+        # needs thread pool
 
         while 1:
 
@@ -225,11 +246,10 @@ class SMTPServer:
             client_socket, client_address = self.socket.accept()
 
             try:
-                thread = threading.Thread(target=self.client_func, args=(client_socket,client_address))
+                thread = threading.Thread(target=self.client_func, args=(client_socket, client_address))
                 thread.start()
             except Exception as e:
                 print("Unable to create new thread for client ", client_address)
-
 
 
 print("Starting server")
