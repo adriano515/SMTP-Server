@@ -6,11 +6,12 @@ import time
 import os
 import threading
 import re
+import sqlite3
 
 
 class SMTPServer:
     ok = "250 Ok".encode()
-    msg = ""
+    local_domain = "grupo2.com"
 
     def __init__(self, port=2407):
         self.host = (socket.gethostbyname(socket.gethostname()))
@@ -21,6 +22,7 @@ class SMTPServer:
         try:
             print("Launching SMTP server on ", self.host, ":", self.port)
             self.socket.bind((self.host, self.port))
+            print("Initializing DB")
 
         except Exception as e:
             print("Error: Could not launch server")
@@ -231,9 +233,11 @@ class SMTPServer:
         for i in range(len(to_list)):
             domain = to_list[i].split("@")[1]
             domain = domain.replace(">", "")
-            print(domain)
-
-            self.send_mail(domain, mail_from, to_list[i], msg)
+            print("domain is " + domain)
+            if(domain != self.local_domain):
+                self.send_mail(domain, mail_from, to_list[i], msg)
+            #else:
+               
 
     def _wait_for_connections(self):
 
