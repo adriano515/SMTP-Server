@@ -127,6 +127,12 @@ class SMTPServer:
             return True
         return False
 
+    def match_parameter(self, str_to_match, str_to_test):
+        string = bytes.decode(str_to_test)
+        if re.search(str_to_match, string):
+            return True
+        return False
+
     def catch_msg(self, string, client_socket):
         string = bytes.decode(string)
         msg = ""
@@ -191,10 +197,10 @@ class SMTPServer:
 
         to_list = []
 
-        print("Client ", client_address, " connected")
+        print("Client ", client_address, " connected to smtp server")
 
         # 220 Servidor FreddieSMTP
-        client_socket.send("220 Servidor FreddieSMTP\n".encode())
+        client_socket.send("220 Servidor SMTP\n".encode())
         print("Sent 220")
         client_response = client_socket.recv(1024)
 
@@ -293,6 +299,56 @@ class SMTPServer:
                 )
 
                 post_id = collection.insert_one(post).inserted_id
+
+
+    def check_username(self, user, password):
+        return True
+
+    def pop3_server(self, client_socket, client_address):
+
+        print("Client ", client_address, " connected to pop3 server")
+
+        client_socket.send("+OK POP3 server ready\n".encode())
+        print("Sent +OK server ready")
+        client_response = client_socket.recv(1024)
+        print(client_response)
+
+        while not(self.match_parameter('user \w+', client_response)):
+            print("Error on user")
+            client_socket.send("-ERR user\n".encode())
+            client_response = client_socket.recv(1024)
+            print(client_response)
+
+        user = bytes.decode(client_response)
+        client_socket.send("+OK\n".encode())
+        print("Sent +OK user")
+        client_response = client_socket.recv(1024)
+        print(client_response)
+
+        while not(self.match_parameter('pass \w+', client_response)):
+            print("Error on pass")
+            client_socket.send("-ERR pass\n".encode())
+            client_response = client_socket.recv(1024)
+            print(client_response)
+
+        password = bytes.decode(client_response)
+
+        if not (self.check_username(user, password)):
+            print("Error on authentication")
+            client_socket.send("-ERR authenticating\n".encode())
+            # -----------------------------------------------------------
+            # should we close connection here? should the server restart?, currently only closing connection
+            # -----------------------------------------------------------
+            print(client_response)
+            return
+
+        client_socket.send("+OK user successfully logged on\n".encode())
+        print("Sent +OK authenticated")
+        client_response = client_socket.recv(1024)
+        print(client_response)
+
+
+
 
     def _wait_for_connections(self):
 
