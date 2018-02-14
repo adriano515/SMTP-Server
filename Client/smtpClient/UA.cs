@@ -22,5 +22,16 @@ namespace smtpClient
             Form1 form = new Form1();
             form.Show();
         }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            newUser form = new newUser();
+            form.Show();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
