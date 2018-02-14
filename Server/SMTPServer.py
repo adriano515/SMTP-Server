@@ -300,6 +300,35 @@ class SMTPServer:
 
                 post_id = collection.insert_one(post).inserted_id
 
+    def transaction_0(self, user, number):
+        #list
+        return
+    def transaction_1(self, user, number):
+        #retr
+        return
+    def transaction_2(self, user, number):
+        #dele
+        return
+    def transaction_3(self, user, number):
+        #quit
+        return
+
+    def match_transaction(self, string, user):
+        number = 0
+        string = bytes.decode(string)
+        action = re.findall('(list)|(retr \d)|(dele \d)|(quit)', string)
+        for x in range(len(action[0])):
+            if (len(action[0][x]) > 1):
+                method_name = 'transaction_' + str(x)
+                method = getattr(self, method_name, lambda: "nothing")
+                if (x == 1 or x == 2):
+                    numbers = [int(s) for s in str.split() if s.isdigit()]
+                    number = numbers[0]
+                return method(user,number)
+        return
+
+
+
 
     def check_username(self, user, password):
         return True
@@ -346,6 +375,10 @@ class SMTPServer:
         print("Sent +OK authenticated")
         client_response = client_socket.recv(1024)
         print(client_response)
+
+        #---------Transaction Phase-------------
+
+        self.match_transaction(client_response)
 
 
 
