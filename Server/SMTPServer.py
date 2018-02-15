@@ -330,8 +330,13 @@ class SMTPServer:
 
 
 
-    def check_username(self, user, password):
+    def check_usr(self, user, password):
+
         return True
+
+    def register_usr(self,user, password):
+        client_new_usr = MongoClient()
+
 
     def pop3_server(self, client_socket, client_address):
 
@@ -362,7 +367,7 @@ class SMTPServer:
 
         password = bytes.decode(client_response)
 
-        if not (self.check_username(user, password)):
+        if not (self.check_usr(user, password)):
             print("Error on authentication")
             client_socket.send("-ERR authenticating\n".encode())
             # -----------------------------------------------------------
@@ -378,7 +383,7 @@ class SMTPServer:
 
         #---------Transaction Phase-------------
 
-        self.match_transaction(client_response)
+        self.match_transaction(client_response, user)
 
 
 
