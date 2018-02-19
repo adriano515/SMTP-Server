@@ -15,7 +15,8 @@ namespace smtpClient
 {
     public partial class Form1 : Form
     {
-        serverConnection server = new serverConnection();
+        public TcpClient serverConnection;
+        serverConnection server = new serverConnection("localhost",2407);
         public Form1()
         {
             InitializeComponent();
@@ -25,21 +26,21 @@ namespace smtpClient
         {
             String[] emails = toEmail.Text.Split(',');
             DateTime thisDay = DateTime.Today;
-            var rcptemails = Array.TrueForAll(emails, email => { return server.ResponseInt(email, 250);});
+            var rcptemails = Array.TrueForAll(emails, email => { return server.ResponseTCP(email, 250);});
             String[] message = dataTextbox.Text.Split('\n');
             if (emails.All(a=> server.Validate(a))) {
-                if (server.ResponseInt("HELO relay.example.com",250) && server.ResponseInt("MAIL FROM: <bob@example.com>",250) && rcptemails && server.ResponseInt("DATA\n",354))
+                if (server.ResponseTCP("HELO relay.example.com",250) && server.ResponseTCP("MAIL FROM: <bob@example.com>",250) && rcptemails && server.ResponseTCP("DATA\n",354))
                 {
-                    server.Write("From: " + "bat14074gar14189" + " <bat14074gar14189@example.com>");
-                    server.Write("To: Alice Example "+ String.Join(",", (from email in Enumerable.Range(0, emails.Length) select "<" + emails[email] + ">")).ToString() + "");
+                    server.Write("From:<bat14074gar14189@example.com>");
+                    server.Write("To: "+ String.Join(",", (from email in Enumerable.Range(0, emails.Length) select "<" + emails[email] + ">")).ToString() + "");
                     server.Write("Date: " + thisDay.ToString() + "");
                     server.Write("Subject: "+ subjectText.Text +"");
                     server.Write("\n");
                     Array.ForEach(message, element => server.Write(element));
-                    if (server.ResponseInt(".\n",250) && server.ResponseInt("QUIT",221)) {
+                    if (server.ResponseTCP(".\n",250) && server.ResponseTCP("QUIT",221)) {
                         emailErrorLabel.Text = "Email Sent";
                         server.ns.Close();
-                        server.server.Close();
+                        serverConnection.Close();
                     }
                 }
             }
@@ -58,7 +59,7 @@ namespace smtpClient
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            if(server.Connect(ipTextbox.Text, Int32.Parse(portTextbox.Text))){
+            if (serverConnection!=null){
                 toEmail.Enabled = true;
                 subjectText.Enabled = true;
                 dataTextbox.Enabled = true;

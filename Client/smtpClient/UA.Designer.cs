@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.Column1 = new System.Windows.Forms.DataGridViewButtonColumn();
             this.button1 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -40,10 +39,13 @@
             this.button2 = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.userTextbox = new System.Windows.Forms.TextBox();
+            this.passTextbox = new System.Windows.Forms.TextBox();
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
+            this.errorLabel = new System.Windows.Forms.Label();
+            this.subject = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.id = new System.Windows.Forms.DataGridViewLinkColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -51,18 +53,13 @@
             // 
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Column1});
-            this.dataGridView1.Enabled = false;
+            this.subject,
+            this.id});
             this.dataGridView1.Location = new System.Drawing.Point(26, 62);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.Size = new System.Drawing.Size(284, 364);
             this.dataGridView1.TabIndex = 0;
-            // 
-            // Column1
-            // 
-            this.Column1.HeaderText = "Seleccionar";
-            this.Column1.Name = "Column1";
-            this.Column1.Text = "Ver correo";
+            this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
             // button1
             // 
@@ -73,6 +70,7 @@
             this.button1.TabIndex = 1;
             this.button1.Text = "Recibir Correos";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // label1
             // 
@@ -155,19 +153,19 @@
             this.label5.TabIndex = 10;
             this.label5.Text = "Password:";
             // 
-            // textBox1
+            // userTextbox
             // 
-            this.textBox1.Location = new System.Drawing.Point(244, 9);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(264, 20);
-            this.textBox1.TabIndex = 11;
+            this.userTextbox.Location = new System.Drawing.Point(244, 9);
+            this.userTextbox.Name = "userTextbox";
+            this.userTextbox.Size = new System.Drawing.Size(264, 20);
+            this.userTextbox.TabIndex = 11;
             // 
-            // textBox2
+            // passTextbox
             // 
-            this.textBox2.Location = new System.Drawing.Point(244, 36);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(264, 20);
-            this.textBox2.TabIndex = 12;
+            this.passTextbox.Location = new System.Drawing.Point(244, 36);
+            this.passTextbox.Name = "passTextbox";
+            this.passTextbox.Size = new System.Drawing.Size(264, 20);
+            this.passTextbox.TabIndex = 12;
             // 
             // button3
             // 
@@ -189,15 +187,37 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
+            // errorLabel
+            // 
+            this.errorLabel.AutoSize = true;
+            this.errorLabel.Location = new System.Drawing.Point(26, 433);
+            this.errorLabel.Name = "errorLabel";
+            this.errorLabel.Size = new System.Drawing.Size(0, 13);
+            this.errorLabel.TabIndex = 15;
+            // 
+            // subject
+            // 
+            this.subject.DataPropertyName = "subject";
+            this.subject.HeaderText = "Subject";
+            this.subject.Name = "subject";
+            // 
+            // id
+            // 
+            this.id.DataPropertyName = "id";
+            this.id.HeaderText = "id";
+            this.id.Name = "id";
+            this.id.Visible = false;
+            // 
             // UA
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(635, 450);
+            this.Controls.Add(this.errorLabel);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);
-            this.Controls.Add(this.textBox2);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.passTextbox);
+            this.Controls.Add(this.userTextbox);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.button2);
@@ -220,7 +240,6 @@
         #endregion
 
         private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.DataGridViewButtonColumn Column1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
@@ -231,9 +250,12 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox userTextbox;
+        private System.Windows.Forms.TextBox passTextbox;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Label errorLabel;
+        private System.Windows.Forms.DataGridViewLinkColumn subject;
+        private System.Windows.Forms.DataGridViewLinkColumn id;
     }
 }

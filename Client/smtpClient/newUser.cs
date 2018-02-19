@@ -12,7 +12,7 @@ namespace smtpClient
 {
     public partial class newUser : Form
     {
-        serverConnection server = new serverConnection();
+        serverConnection server = new serverConnection("localhost",2407);
         public newUser()
         {
             InitializeComponent();
@@ -20,7 +20,7 @@ namespace smtpClient
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (server.ResponseInt("new user:" + userText.Text + "pass:" + passText.Text + "", 250)) errorLabel.Text = "Usuario Creado con exito";
+            if (server.ResponseTCP("new user:" + userText.Text + "pass:" + passText.Text + "", 250)) errorLabel.Text = "Usuario Creado con exito";
             else errorLabel.Text = "Error";
         }
     }
