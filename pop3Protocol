@@ -1,0 +1,9 @@
+Server> +OK
+C: user x
+S> +OK
+C: pass x
+S> +OK
+C: list
+C: retr x
+C: dele x
+C: quit

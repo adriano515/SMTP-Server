@@ -53,34 +53,46 @@ class SMTPServer:
 
     ok = "250 Ok".encode()
     local_domain = "grupo2.com"
-    pool = ThreadPool(5)
+    pool = ThreadPool(5)   #threadsafe?
     client = MongoClient()
     server_db = client.domainEmails
 
 
     def __init__(self, port=2407, ):
         self.host = (socket.gethostbyname(socket.gethostname()))
-        self.port = port
+        self.port_smtp = 2407
+        self.port_pop3 = 2000
 
     def activate_server(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_smtp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_pop3 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print("Launching SMTP server on ", self.host, ":", self.port)
-            self.socket.bind((self.host, self.port))
-            print("Initializing DB")
+            print("Launching SMTP server on ", self.host, ":", self.port_smtp)
+            self.socket_smtp.bind((self.host, self.port_smtp))
 
         except Exception as e:
-            print("Error: Could not launch server")
-            self.shutdown()
-            sys.exit(1)
+            print("Error: Could not launch smtp server")
+            self.shutdown(self.socket_smtp)
+            #sys.exit(1)
 
-        print("Server successfully started the socket")
-        self._wait_for_connections()
+        try:
+            print("Launching Pop3 server on ", self.host, ":", self.port_pop3)
+            self.socket_pop3.bind((self.host, self.port_pop3))
 
-    def shutdown(self):
+        except Exception as e:
+            print("Error: Could not launch pop3 server", e)
+            self.shutdown(self.socket_pop3)
+          #  sys.exit(1)
+
+
+        smtp_thread = Thread(target = self._wait_for_connections, args = (self.socket_smtp, "smtp"))
+        smtp_thread.start()
+        self._wait_for_connections(self.socket_pop3, "pop3")
+
+    def shutdown(self, socket_prot):
         try:
             print("Shutting down server")
-            socket.socket.shutdown(socket.SHUT_RDWR)
+            socket_prot.shutdown(socket.SHUT_RDWR)
 
         except Exception as e:
             print("Could not shutdown server, error : ", e)
@@ -204,14 +216,14 @@ class SMTPServer:
         print("Sent 220")
         client_response = client_socket.recv(1024)
 
-        print(client_response)
+        print(bytes.decode(client_response))
         hello = self.match_helo(client_response)
         # HELO something
         while not hello:
             client_socket.send("502 Unrecognized command\n".encode())
             print("Sent 502 on HELO")
             client_response = client_socket.recv(1024)
-            print(client_response)
+            print(bytes.decode(client_response))
             hello = self.match_helo(client_response)
         # 250 Yo! pleased to meet ya
         client_socket.send("250 Yo! pleased to meet ya\n".encode())
@@ -225,14 +237,14 @@ class SMTPServer:
             client_socket.send("502 Unrecognized command\n".encode())
             print("Sent 502 on MAIL")
             client_response = client_socket.recv(1024)
-            print(client_response)
+            print(bytes.decode(client_response))
             mail_from = self.match_mail_from(client_response)
         # 250 OK
-        print(client_response)
+        print(bytes.decode(client_response))
         client_socket.send("250 OK\n".encode())
         print("Sent 250 after mail")
         client_response = client_socket.recv(1024)
-        print(client_response)
+        print(bytes.decode(client_response))
         recpt_to = self.match_rcpt(client_response)
 
         # RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
@@ -240,7 +252,7 @@ class SMTPServer:
             client_socket.send("502 Unrecognized command\n".encode())
             print("Sent 502 on RCPT")
             client_response = client_socket.recv(1024)
-            print(client_response)
+            print(bytes.decode(client_response))
             recpt_to = self.match_rcpt(client_response)
         # 250 OK
         to_list.append(bytes.decode(client_response))
@@ -302,27 +314,33 @@ class SMTPServer:
 
     def transaction_0(self, user, number):
         #list
-        return
+        print(user, " petition: list")
+        return True
     def transaction_1(self, user, number):
         #retr
-        return
+        print(user ," petition: retr ", number)
+        return True
     def transaction_2(self, user, number):
         #dele
-        return
+        print(user, " petition: retr ", number)
+        return True
     def transaction_3(self, user, number):
         #quit
-        return
+        print(user, " petition: quit")
+        return False
 
     def match_transaction(self, string, user):
         number = 0
         string = bytes.decode(string)
         action = re.findall('(list)|(retr \d)|(dele \d)|(quit)', string)
+        print ("debug : action", action)
         for x in range(len(action[0])):
             if (len(action[0][x]) > 1):
                 method_name = 'transaction_' + str(x)
                 method = getattr(self, method_name, lambda: "nothing")
+                print("debug : method name", method_name)
                 if (x == 1 or x == 2):
-                    numbers = [int(s) for s in str.split() if s.isdigit()]
+                    numbers = [int(s) for s in string.split() if s.isdigit()]
                     number = numbers[0]
                 return method(user,number)
         return
@@ -345,25 +363,25 @@ class SMTPServer:
         client_socket.send("+OK POP3 server ready\n".encode())
         print("Sent +OK server ready")
         client_response = client_socket.recv(1024)
-        print(client_response)
+        print(bytes.decode(client_response))
 
         while not(self.match_parameter('user \w+', client_response)):
             print("Error on user")
             client_socket.send("-ERR user\n".encode())
             client_response = client_socket.recv(1024)
-            print(client_response)
+            print(bytes.decode(client_response))
 
         user = bytes.decode(client_response)
         client_socket.send("+OK\n".encode())
         print("Sent +OK user")
         client_response = client_socket.recv(1024)
-        print(client_response)
+        print(bytes.decode(client_response))
 
         while not(self.match_parameter('pass \w+', client_response)):
             print("Error on pass")
             client_socket.send("-ERR pass\n".encode())
             client_response = client_socket.recv(1024)
-            print(client_response)
+            print(bytes.decode(client_response))
 
         password = bytes.decode(client_response)
 
@@ -373,33 +391,37 @@ class SMTPServer:
             # -----------------------------------------------------------
             # should we close connection here? should the server restart?, currently only closing connection
             # -----------------------------------------------------------
-            print(client_response)
+            print(bytes.decode(client_response))
             return
 
         client_socket.send("+OK user successfully logged on\n".encode())
         print("Sent +OK authenticated")
-        client_response = client_socket.recv(1024)
-        print(client_response)
+
 
         #---------Transaction Phase-------------
+        on = True
+        while on:
+            client_response = client_socket.recv(1024)
+            print("got from user ",client_response ," ", bytes.decode(client_response))
+            on = self.match_transaction(client_response, user)
+        print("client: ", client_address, " closed connection on pop3")
 
-        self.match_transaction(client_response, user)
 
 
-
-
-    def _wait_for_connections(self):
-        print("Waiting for clients")
+    def _wait_for_connections(self,socket_prot, string):
+        print("Waiting for clients on socket " , string)
         while 1:
 
-
-            self.socket.listen(5)
-            client_socket, client_address = self.socket.accept()
+            socket_prot.listen(5)
+            client_socket, client_address = socket_prot.accept()
 
             try:
-                self.pool.add_task(self.client_func, client_socket, client_address)
+                if("smtp" in string):
+                    self.pool.add_task(self.client_func, client_socket, client_address)
+                elif ("pop3" in string):
+                    self.pool.add_task(self.pop3_server, client_socket, client_address)
             except Exception as e:
-                print("Unable to create new thread for client ", client_address)
+                print("Unable to create new thread for client ", client_address, e)
             print("Waiting for clients")
 
 print("Starting server")
