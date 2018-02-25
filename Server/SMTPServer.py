@@ -389,18 +389,18 @@ class SMTPServer:
 
 
     def _wait_for_connections(self):
-
+        print("Waiting for clients")
         while 1:
 
-            print("Waiting for clients")
-            self.socket.listen()
+
+            self.socket.listen(5)
             client_socket, client_address = self.socket.accept()
 
             try:
-                pool.add_task(self.client_func, args=(client_socket, client_address))
+                self.pool.add_task(self.client_func, client_socket, client_address)
             except Exception as e:
                 print("Unable to create new thread for client ", client_address)
-
+            print("Waiting for clients")
 
 print("Starting server")
 
