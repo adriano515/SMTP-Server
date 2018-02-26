@@ -4,6 +4,8 @@ from multiprocessing import pool
 import socket
 import sys
 import re
+
+import time
 from pymongo import MongoClient
 from queue import Queue
 from threading import Thread
@@ -311,13 +313,12 @@ class SMTPServer:
                 print("self domain, storing message")
 
                 collection = self.server_db[to_list[i]]
-                if (collection.count() != 0):
+                client_db = self.client_db[to_list[i]]
+                if (client_db.count() != 0):
 
                     post = dict(
                             From = mail_from,
                             To = to_list[i],
-                            Subject = "test",
-                            Date = "date",
                             Data = msg,
                     )
 
@@ -329,26 +330,45 @@ class SMTPServer:
 
     def transaction_0(self, user, number):
         #list
+        print(user, " petition: list")
+        byte_size = []
         collection = self.server_db[user]
         if (collection.count() != 0):
             docs = collection.find({},{'_id':False})
             for x in docs:
                 dump = dumps(x)
-                byte_size = len(dump)
-        print(user, " petition: list")
-        return True
+                byte_size.append(len(dump))
+            return True,0,byte_size
+        return True,0,0
+
     def transaction_1(self, user, number):
         #retr
+        email = []
         print(user ," petition: retr ", number)
-        return True
+        collection = self.server_db[user]
+        if (collection.count() != 0):
+            docs = collection.find({}, {'_id': False}).skip(number - 1).limit(1)
+            for x in docs[0]:
+                email.append(x + " : " + docs[0][x])
+            return True,1,email
+        return True,1,0
+
     def transaction_2(self, user, number):
         #dele
-        print(user, " petition: retr ", number)
-        return True
+        print(user, " petition: dele ", number)
+        collection = self.server_db[user]
+
+        if (collection.count() != 0):
+            docs = collection.find({}).skip(number - 1).limit(1)
+            id = docs[0]['_id']
+            collection.remove({'_id':id})
+            return True,2,0
+        return True,2,0
+
     def transaction_3(self, user, number):
         #quit
         print(user, " petition: quit")
-        return False
+        return False,3,0
 
     def match_transaction(self, string, user):
         number = 0
@@ -440,8 +460,22 @@ class SMTPServer:
         while on:
             client_response = client_socket.recv(1024)
             print("got from user ",client_response ," ", bytes.decode(client_response))
-            on = self.match_transaction(client_response, user)
+            on,action,list = self.match_transaction(client_response, user)
+            if(action==0):
+                if(list != 0):
+                    for key, value in enumerate(list):
+                        msg = "{}{}{}{}".format(key + 1, " ", value,"\n")
+                        client_socket.send(msg.encode())
+                client_socket.send(".\n".encode())
+            elif(action==1):
+                if (list != 0):
+                    for x in list:
+                        client_socket.send((x+"\n").encode())
+                client_socket.send(".\n".encode())
+
+        client_socket.send(("+OK POP3 server signing off \n").encode())
         print("client: ", client_address, " closed connection on pop3")
+        client_socket.close()
 
 
 
