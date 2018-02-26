@@ -1,3 +1,4 @@
+import pprint
 from multiprocessing import pool
 
 import socket
@@ -6,6 +7,7 @@ import re
 from pymongo import MongoClient
 from queue import Queue
 from threading import Thread
+from bson.json_util import dumps
 
 
 class Worker(Thread):
@@ -55,7 +57,9 @@ class SMTPServer:
     local_domain = "grupo2.com"
     pool = ThreadPool(5)   #threadsafe?
     client = MongoClient()
+    client2 = MongoClient()
     server_db = client.domainEmails
+    client_db = client2.users
 
 
     def __init__(self, port=2407, ):
@@ -146,9 +150,10 @@ class SMTPServer:
         return False
 
     def catch_msg(self, string, client_socket):
+        #isnt saving spaces
         string = bytes.decode(string)
         msg = ""
-        while not re.search('.', string):
+        while not re.search('^\.$', string):
             msg = "{}{}{}".format(msg, string, "\n")
             string = client_socket.recv(1024)
             string = bytes.decode(string)
@@ -240,6 +245,7 @@ class SMTPServer:
             print(bytes.decode(client_response))
             mail_from = self.match_mail_from(client_response)
         # 250 OK
+        mail_from = bytes.decode(client_response).strip().split("<")[1].replace(">","")
         print(bytes.decode(client_response))
         client_socket.send("250 OK\n".encode())
         print("Sent 250 after mail")
@@ -255,7 +261,7 @@ class SMTPServer:
             print(bytes.decode(client_response))
             recpt_to = self.match_rcpt(client_response)
         # 250 OK
-        to_list.append(bytes.decode(client_response))
+        to_list.append(bytes.decode(client_response).strip().split("<")[1].replace(">",""))
         client_socket.send("250 OK\n".encode())
         print("Sent 250 after rcpt")
         client_response = bytes.decode(client_socket.recv(1024))
@@ -267,9 +273,9 @@ class SMTPServer:
             client_response = client_socket.recv(1024)
             print(client_response)
             recpt_to = self.match_rcpt(client_response)
-            to_list.append(bytes.decode(client_response))
+            to_list.append(bytes.decode(client_response).strip().split("<")[1].replace(">",""))
         # DATA
-        while client_response != "DATA":
+        while not re.search('^DATA$', client_response):
             print("Sent 502 on data")
             client_socket.send("502 Unrecognized command\n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
@@ -296,24 +302,39 @@ class SMTPServer:
         for i in range(len(to_list)):
             domain = to_list[i].split("@")[1]
             domain = domain.replace(">", "")
+            domain = domain.strip()
             print("domain is " + domain)
             if(domain != self.local_domain):
+                print("not local domain, trying to send msg to domain ", domain)
                 self.send_mail(domain, mail_from, to_list[i], msg)
             else:
-                collection = self.server_db[domain]
+                print("self domain, storing message")
 
-                post = dict(
-                        From = mail_from,
-                        To = to_list[i],
-                        Subject = "test",
-                        Date = "date",
-                        Data = msg,
-                )
+                collection = self.server_db[to_list[i]]
+                if (collection.count() != 0):
 
-                post_id = collection.insert_one(post).inserted_id
+                    post = dict(
+                            From = mail_from,
+                            To = to_list[i],
+                            Subject = "test",
+                            Date = "date",
+                            Data = msg,
+                    )
+
+                    post_id = collection.insert_one(post).inserted_id
+                #else:
+                ##################################
+                #send message to email : from saying email : to_list[i] doesnt exist.
+
 
     def transaction_0(self, user, number):
         #list
+        collection = self.server_db[user]
+        if (collection.count() != 0):
+            docs = collection.find({},{'_id':False})
+            for x in docs:
+                dump = dumps(x)
+                byte_size = len(dump)
         print(user, " petition: list")
         return True
     def transaction_1(self, user, number):
@@ -333,12 +354,12 @@ class SMTPServer:
         number = 0
         string = bytes.decode(string)
         action = re.findall('(list)|(retr \d)|(dele \d)|(quit)', string)
-        print ("debug : action", action)
+
         for x in range(len(action[0])):
             if (len(action[0][x]) > 1):
                 method_name = 'transaction_' + str(x)
                 method = getattr(self, method_name, lambda: "nothing")
-                print("debug : method name", method_name)
+
                 if (x == 1 or x == 2):
                     numbers = [int(s) for s in string.split() if s.isdigit()]
                     number = numbers[0]
@@ -349,14 +370,30 @@ class SMTPServer:
 
 
     def check_usr(self, user, password):
-
-        return True
+        collection = self.client_db[user]
+        if (collection.count() != 0):
+            if collection.find_one({ "pwd":password}):
+                return True
+            return False
+        else:
+            return False
 
     def register_usr(self,user, password):
-        client_new_usr = MongoClient()
+        collection = self.client_db[user]
+        print(user)
+        print(collection.count())
+        if (collection.count() == 0):
+            post = dict(
+                user=user,
+                pwd=password
+            )
+
+            post_id = collection.insert_one(post).inserted_id
 
 
     def pop3_server(self, client_socket, client_address):
+
+        self.register_usr("test@grupo2.com", "test")
 
         print("Client ", client_address, " connected to pop3 server")
 
@@ -371,7 +408,7 @@ class SMTPServer:
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
 
-        user = bytes.decode(client_response)
+        user = bytes.decode(client_response).split(" ")[1].strip()
         client_socket.send("+OK\n".encode())
         print("Sent +OK user")
         client_response = client_socket.recv(1024)
@@ -383,7 +420,7 @@ class SMTPServer:
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
 
-        password = bytes.decode(client_response)
+        password = bytes.decode(client_response).split(" ")[1].strip()
 
         if not (self.check_usr(user, password)):
             print("Error on authentication")
