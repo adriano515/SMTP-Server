@@ -156,7 +156,7 @@ class SMTPServer:
         string = bytes.decode(string)
         msg = ""
         while not re.search('^\.$', string):
-            msg = "{}{}{}".format(msg, string, "\n")
+            msg = "{}{}{}".format(msg, string, " \n")
             string = client_socket.recv(1024)
             string = bytes.decode(string)
             print(string)
@@ -198,10 +198,10 @@ class SMTPServer:
             print("Server with domain " + domain + "responded with error")
             return
 
-        msgArray = msg.split("\n")
+        msgArray = msg.split(" \n")
         for i in msgArray:
             server_socket.send(msgArray[i])
-        server_socket.send(".\n")
+        server_socket.send(". \n")
         response = server_socket.recv(1024)
 
         if ("250" not in bytes.decode(response)):
@@ -219,7 +219,7 @@ class SMTPServer:
         print("Client ", client_address, " connected to smtp server")
 
         # 220 Servidor FreddieSMTP
-        client_socket.send("220 Servidor SMTP\n".encode())
+        client_socket.send("220 Servidor SMTP \n".encode())
         print("Sent 220")
         client_response = client_socket.recv(1024)
 
@@ -227,13 +227,13 @@ class SMTPServer:
         hello = self.match_helo(client_response)
         # HELO something
         while not hello:
-            client_socket.send("502 Unrecognized command\n".encode())
+            client_socket.send("502 Unrecognized command \n".encode())
             print("Sent 502 on HELO")
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
             hello = self.match_helo(client_response)
         # 250 Yo! pleased to meet ya
-        client_socket.send("250 Yo! pleased to meet ya\n".encode())
+        client_socket.send("250 Yo! pleased to meet ya \n".encode())
         print("Sent 250 on meeting")
         client_response = client_socket.recv(1024)
 
@@ -241,7 +241,7 @@ class SMTPServer:
 
         # MAIL FROM: <SOMETHING@SOMETHING.SOMETHING>
         while not mail_from:
-            client_socket.send("502 Unrecognized command\n".encode())
+            client_socket.send("502 Unrecognized command \n".encode())
             print("Sent 502 on MAIL")
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
@@ -249,7 +249,7 @@ class SMTPServer:
         # 250 OK
         mail_from = bytes.decode(client_response).strip().split("<")[1].replace(">","")
         print(bytes.decode(client_response))
-        client_socket.send("250 OK\n".encode())
+        client_socket.send("250 OK \n".encode())
         print("Sent 250 after mail")
         client_response = client_socket.recv(1024)
         print(bytes.decode(client_response))
@@ -257,20 +257,20 @@ class SMTPServer:
 
         # RCPT TO: <SOMETHING@SOMETHING.SOMETHING>
         while not recpt_to:
-            client_socket.send("502 Unrecognized command\n".encode())
+            client_socket.send("502 Unrecognized command \n".encode())
             print("Sent 502 on RCPT")
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
             recpt_to = self.match_rcpt(client_response)
         # 250 OK
         to_list.append(bytes.decode(client_response).strip().split("<")[1].replace(">",""))
-        client_socket.send("250 OK\n".encode())
+        client_socket.send("250 OK \n".encode())
         print("Sent 250 after rcpt")
         client_response = bytes.decode(client_socket.recv(1024))
         print(client_response)
 
         while self.match_rcpt(client_response.encode()):
-            client_socket.send("250 OK\n".encode())
+            client_socket.send("250 OK \n".encode())
             print("Sent 250 on recpt data")
             client_response = client_socket.recv(1024)
             print(client_response)
@@ -279,11 +279,11 @@ class SMTPServer:
         # DATA
         while not re.search('^DATA$', client_response):
             print("Sent 502 on data")
-            client_socket.send("502 Unrecognized command\n".encode())
+            client_socket.send("502 Unrecognized command \n".encode())
             client_response = bytes.decode(client_socket.recv(1024))
             print(client_response)
 
-        client_socket.send("354 End data with <CR><LF>.<CR><LF>\n".encode())
+        client_socket.send("354 End data with <CR><LF>.<CR><LF> \n".encode())
         print("Sent 354")
 
         # if ( != ):
@@ -293,10 +293,10 @@ class SMTPServer:
         print(client_response)
         msg = self.catch_msg(client_response, client_socket)
         print("Finished data")
-        client_socket.send("250 Ok\n".encode())
+        client_socket.send("250 Ok \n".encode())
         client_response = client_socket.recv(1024)
         print(client_response)
-        client_socket.send("221 Bye\n".encode())
+        client_socket.send("221 Bye \n".encode())
 
         print("Closing connection with client: ", client_address)
         client_socket.close()
@@ -417,26 +417,26 @@ class SMTPServer:
 
         print("Client ", client_address, " connected to pop3 server")
 
-        client_socket.send("+OK POP3 server ready\n".encode())
+        client_socket.send("+OK POP3 server ready \n".encode())
         print("Sent +OK server ready")
         client_response = client_socket.recv(1024)
         print(bytes.decode(client_response))
 
         while not(self.match_parameter('user \w+', client_response)):
             print("Error on user")
-            client_socket.send("-ERR user\n".encode())
+            client_socket.send("-ERR user \n".encode())
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
 
         user = bytes.decode(client_response).split(" ")[1].strip()
-        client_socket.send("+OK\n".encode())
+        client_socket.send("+OK \n".encode())
         print("Sent +OK user")
         client_response = client_socket.recv(1024)
         print(bytes.decode(client_response))
 
         while not(self.match_parameter('pass \w+', client_response)):
             print("Error on pass")
-            client_socket.send("-ERR pass\n".encode())
+            client_socket.send("-ERR pass \n".encode())
             client_response = client_socket.recv(1024)
             print(bytes.decode(client_response))
 
@@ -444,14 +444,14 @@ class SMTPServer:
 
         if not (self.check_usr(user, password)):
             print("Error on authentication")
-            client_socket.send("-ERR authenticating\n".encode())
+            client_socket.send("-ERR authenticating \n".encode())
             # -----------------------------------------------------------
             # should we close connection here? should the server restart?, currently only closing connection
             # -----------------------------------------------------------
             print(bytes.decode(client_response))
             return
 
-        client_socket.send("+OK user successfully logged on\n".encode())
+        client_socket.send("+OK user successfully logged on \n".encode())
         print("Sent +OK authenticated")
 
 
@@ -464,14 +464,19 @@ class SMTPServer:
             if(action==0):
                 if(list != 0):
                     for key, value in enumerate(list):
-                        msg = "{}{}{}{}".format(key + 1, " ", value,"\n")
+                        msg = "{}{}{}{}".format(key + 1, " ", value," \n")
                         client_socket.send(msg.encode())
-                client_socket.send(".\n".encode())
+                        print("sent " + msg + "to client ", client_address)
+                        time.sleep(5)
+                client_socket.send(". \n".encode())
+                print("punto")
             elif(action==1):
                 if (list != 0):
                     for x in list:
-                        client_socket.send((x+"\n").encode())
-                client_socket.send(".\n".encode())
+                        client_socket.send((x+" \n").encode())
+                        print("sent " + (x+" \n") + "to client ", client_address)
+                        time.sleep(5)
+                client_socket.send(". \n".encode())
 
         client_socket.send(("+OK POP3 server signing off \n").encode())
         print("client: ", client_address, " closed connection on pop3")
