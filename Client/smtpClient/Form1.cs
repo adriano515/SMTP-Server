@@ -16,7 +16,7 @@ namespace smtpClient
     public partial class Form1 : Form
     {
         public TcpClient serverConnection;
-        serverConnection server = new serverConnection("localhost",2407);
+        serverConnection server = new serverConnection("192.168.43.17",2407);
         public Form1()
         {
             InitializeComponent();
@@ -26,10 +26,9 @@ namespace smtpClient
         {
             String[] emails = toEmail.Text.Split(',');
             DateTime thisDay = DateTime.Today;
-            var rcptemails = Array.TrueForAll(emails, email => { return server.ResponseTCP(email, 250);});
             String[] message = dataTextbox.Text.Split('\n');
             if (emails.All(a=> server.Validate(a))) {
-                if (server.ResponseTCP("HELO relay.example.com",250) && server.ResponseTCP("MAIL FROM: <bob@example.com>",250) && rcptemails && server.ResponseTCP("DATA\n",354))
+                if (server.ResponseTCP("HELO relay.example.com",250) && server.ResponseTCP("MAIL FROM: <bob@example.com>",250) && Array.TrueForAll(emails, email => { return server.ResponseTCP("RCPT TO: <" + email + ">", 250); }) && server.ResponseTCP("DATA\n",354))
                 {
                     server.Write("From:<bat14074gar14189@example.com>");
                     server.Write("To: "+ String.Join(",", (from email in Enumerable.Range(0, emails.Length) select "<" + emails[email] + ">")).ToString() + "");
@@ -39,8 +38,10 @@ namespace smtpClient
                     Array.ForEach(message, element => server.Write(element));
                     if (server.ResponseTCP(".\n",250) && server.ResponseTCP("QUIT",221)) {
                         emailErrorLabel.Text = "Email Sent";
+                        toEmail.Text = "";
+                        subjectText.Text = "";
+                        dataTextbox.Text = "";
                         server.ns.Close();
-                        serverConnection.Close();
                     }
                 }
             }
@@ -59,34 +60,24 @@ namespace smtpClient
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            if (serverConnection!=null){
+            if (server!=null){
                 toEmail.Enabled = true;
                 subjectText.Enabled = true;
                 dataTextbox.Enabled = true;
                 sendMessage.Enabled = true;
-                attachButton.Enabled = true;
                 ipTextbox.Enabled = false;
                 portTextbox.Enabled = false;
                 connectButton.Enabled = false;
             }
         }
-
-        private void attachButton_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-            openFileDialog1.InitialDirectory = @"C:\";
-            openFileDialog1.RestoreDirectory = true;
-            openFileDialog1.Title = "Browse Text Files";
-            openFileDialog1.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-            openFileDialog1.FilterIndex = 2;
-            openFileDialog1.DefaultExt = "txt";
-            openFileDialog1.ShowDialog();
-            emailErrorLabel.Text = openFileDialog1.FileName;
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void button1_Click_2(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

@@ -76,13 +76,18 @@ namespace smtpClient
                 int recv = ns.Read(data, 0, data.Length);
                 String response = Encoding.ASCII.GetString(data, 0, recv);
                 try {
-                    int identificator = Int32.Parse(response);
+                    int identificator = Int32.Parse(response.Split(' ')[0]);
                     Identificator.Add(response);
                 }
                 catch (Exception e) {
-                    if (Int32.Parse(response).Equals(".")) {
+                    if (response.Split(' ')[0].Equals(".")) {
                         return Identificator;
                     }
+                    if (response.Split(':')[0].Equals("From ") || response.Split(':')[0].Equals("To ") || response.Split(':')[0].Equals("Data "))
+                    {
+                        Identificator.Add(response);
+                    }
+
                 }
             }
         }

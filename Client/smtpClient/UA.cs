@@ -20,7 +20,7 @@ namespace smtpClient
 
         db db = new db();
         string mydocpath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        serverConnection server = new serverConnection("localhost", 2407);
+        serverConnection server = new serverConnection("192.168.43.17", 2000);
         public UA()
         {
             
@@ -36,17 +36,21 @@ namespace smtpClient
         private void button4_Click(object sender, EventArgs e)
         {
             dataGridView1.DataSource = db.fillTable("wiichog");
-            //newUser form = new newUser();
-            //form.Show();
+            newUser form = new newUser();
+            form.Show();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (server != null && server.ResponsePOP("APOP " + userTextbox.Text + "") && server.ResponsePOP("PASS " + passTextbox.Text + "")) {
+            if (server != null && server.ResponsePOP("user " + userTextbox.Text + "") && server.ResponsePOP("pass " + passTextbox.Text + "")) {
                 errorLabel.Text = "succesful login";
                 LlenarGridview();
                 userTextbox.Enabled = false;
                 passTextbox.Enabled = false;
+                button1.Enabled = true;
+                button2.Enabled = true;
+                dataGridView1.Enabled = true;
+
             }
             else { errorLabel.Text = "error on login"; }
             
@@ -62,12 +66,11 @@ namespace smtpClient
             List<String> list = server.ListCommand("list");
             for (int i = 0; i < list.Count(); i++)
             {
-                List<String> mail = server.ListCommand("retr " + list[i].ToString());
-                db.insert(list[i], mail[0], mail[1], mail[2], mail[3], "");
-                dataGridView1.DataSource = db.fillTable("wiichog");
-                server.Write("./n");
-                server.Write("del " + list[i]);
+                List<String> mail = server.ListCommand("retr " + list[i].Split(' ')[0].ToString());
+                db.insert(list[i], mail[0], mail[1], mail[2], userTextbox.Text);
+                server.Write("dele " + list[i].Split(' ')[0].ToString());
             }
+            dataGridView1.DataSource = db.fillTable(userTextbox.Text);
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)

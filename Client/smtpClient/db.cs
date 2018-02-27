@@ -13,14 +13,14 @@ namespace smtpClient
     class db
     {
         String MyConnectionString = "Server=localhost;Database=smtp;Uid=root;Pwd=;";
-        public bool insert(String id, String from, String to, String subject, String text, String user) {
+        public bool insert(String id, String from, String to, String text, String user) {
             MySqlConnection connection = new MySqlConnection(MyConnectionString);
             MySqlCommand cmd;
             connection.Open();
             try
             {
                 cmd = connection.CreateCommand();
-                cmd.CommandText = "insert into emails(id,from,to,subject,text,user) values("+ id + ","+ from + ","+ to + ","+ subject + ","+ text + ","+ user + ",)";
+                cmd.CommandText = "insert into emails(`id`,`from`,`toEmail`,`text`,`user`, `subject`) values(" + id.Split(' ')[0] + ",'"+ from.Split(' ')[2] + "','"+ to.Split(' ')[2] + "','"+ text + "','"+ user + "','Hola')";
                 cmd.ExecuteNonQuery();
                 return true;
             }

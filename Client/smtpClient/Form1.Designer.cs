@@ -35,7 +35,6 @@
             this.subjectText = new System.Windows.Forms.TextBox();
             this.dataTextbox = new System.Windows.Forms.RichTextBox();
             this.sendMessage = new System.Windows.Forms.Button();
-            this.attachButton = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.ipTextbox = new System.Windows.Forms.TextBox();
             this.portTextbox = new System.Windows.Forms.TextBox();
@@ -43,7 +42,7 @@
             this.connectButton = new System.Windows.Forms.Button();
             this.connectErrorLabel = new System.Windows.Forms.Label();
             this.emailErrorLabel = new System.Windows.Forms.Label();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -111,17 +110,6 @@
             this.sendMessage.UseVisualStyleBackColor = true;
             this.sendMessage.Click += new System.EventHandler(this.button1_Click);
             // 
-            // attachButton
-            // 
-            this.attachButton.Enabled = false;
-            this.attachButton.Location = new System.Drawing.Point(436, 204);
-            this.attachButton.Name = "attachButton";
-            this.attachButton.Size = new System.Drawing.Size(118, 23);
-            this.attachButton.TabIndex = 7;
-            this.attachButton.Text = "Attachment";
-            this.attachButton.UseVisualStyleBackColor = true;
-            this.attachButton.Click += new System.EventHandler(this.attachButton_Click);
-            // 
             // label4
             // 
             this.label4.AutoSize = true;
@@ -181,15 +169,23 @@
             this.emailErrorLabel.Size = new System.Drawing.Size(0, 13);
             this.emailErrorLabel.TabIndex = 14;
             // 
-            // openFileDialog1
+            // button1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
+            this.button1.Enabled = false;
+            this.button1.Location = new System.Drawing.Point(436, 204);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(118, 23);
+            this.button1.TabIndex = 15;
+            this.button1.Text = "close";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click_2);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(695, 252);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.emailErrorLabel);
             this.Controls.Add(this.connectErrorLabel);
             this.Controls.Add(this.connectButton);
@@ -197,7 +193,6 @@
             this.Controls.Add(this.label5);
             this.Controls.Add(this.ipTextbox);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.attachButton);
             this.Controls.Add(this.sendMessage);
             this.Controls.Add(this.dataTextbox);
             this.Controls.Add(this.subjectText);
@@ -222,7 +217,6 @@
         private System.Windows.Forms.TextBox subjectText;
         private System.Windows.Forms.RichTextBox dataTextbox;
         private System.Windows.Forms.Button sendMessage;
-        private System.Windows.Forms.Button attachButton;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox ipTextbox;
         private System.Windows.Forms.TextBox portTextbox;
@@ -230,7 +224,7 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Label connectErrorLabel;
         private System.Windows.Forms.Label emailErrorLabel;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Button button1;
     }
 }
 
